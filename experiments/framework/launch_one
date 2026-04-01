@@ -1,0 +1,22 @@
+#!/bin/ruby
+
+require 'open3'
+
+if ARGV.size < 2
+    puts "Usage: ./launch_one output_file play_args...\n\n"
+    puts "A simple script that launches a SLURM job with the given output file using ./play with the given args."
+    exit 1
+end
+
+output = ARGV[0]
+args = ARGV.drop(1).join(" ")
+
+File.write("#{output}.info", "File: #{output}\nArgs: #{args}\n")
+
+script = File.read('job.sh')
+script.gsub!("{OUTPUT}", output)
+script.gsub!("{ARGS}", args)
+
+stdin_data = script
+stdout, stderr, status = Open3.capture3("sbatch", stdin_data: stdin_data)
+puts stdout

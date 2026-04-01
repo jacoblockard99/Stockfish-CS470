@@ -1,0 +1,3 @@
+Experiment: reset/fixnodes/open2_1v4_100000
+Nodes: 10
+Args: 1 4 positions/pos_open2 --nodes 100000

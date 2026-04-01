@@ -1,0 +1,4 @@
+#!/bin/bash
+
+source /shared/common/gcc-10.5.0/env.sh
+./play.py "$@"

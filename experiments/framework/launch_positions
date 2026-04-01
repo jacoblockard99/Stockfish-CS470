@@ -1,0 +1,28 @@
+#!/bin/ruby
+
+if ARGV.size < 4
+    puts "Usage: ./launch_positions output_dir positions_file num_nodes play_args...\n\n"
+    puts "A simple script that splits up a position file and launches SLURM jobs for each chunk using ./play with the given args. An output file will be created for each chunk in the given output directory."
+    exit 1
+end
+
+output = ARGV[0]
+positions = ARGV[1]
+nodes = ARGV[2].to_i
+args = ARGV.drop(3).join(" ")
+
+num_positions = File.readlines(positions).size
+interval = num_positions / nodes
+nodes += 1 if num_positions % interval != 0
+
+`mkdir -p #{output}`
+
+nodes.times do |i|
+    pos_start = i * interval
+    pos_end = [pos_start + interval, num_positions].min
+
+    cur_args = args + " --pos-start #{pos_start} --pos-end #{pos_end}"
+    cur_output = File.join(output, i.to_s)
+
+    `./launch_one #{cur_output} #{cur_args}`
+end
