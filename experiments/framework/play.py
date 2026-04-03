@@ -26,8 +26,8 @@ parser.add_argument("--nodes2", help="Limit nodes searched for second Stockfish 
 parser.add_argument("--turn1", help="Limit turn time (s) for first Stockfish engine.", type=float, default=-1)
 parser.add_argument("--turn2", help="Limit turn time (s) for second Stockfish engine.", type=float, default=-1)
 
-parser.add_argument("--clock1", help="Limit total clock time (s) for first Stockfish engine.", type=float, default=-1)
-parser.add_argument("--clock2", help="Limit total clock time (s) for second Stockfish engine.", type=float, default=-1)
+parser.add_argument("--clock1", help="Limit total clock time (s) for first Stockfish engine.", type=float, default=60)
+parser.add_argument("--clock2", help="Limit total clock time (s) for second Stockfish engine.", type=float, default=60)
 
 parser.add_argument("--repeat", help="Repeat all the positions the given number of times.", type=int, default=1)
 parser.add_argument("--verbose", help="Print all board positions.", action="store_true")
@@ -73,6 +73,12 @@ if args.nodes2 != -1:
 
 # Function to simulate a single game between two engines.
 
+def reset_clock():
+    limits1.white_clock = args.clock1
+    limits1.black_clock = args.clock1
+    limits2.white_clock = args.clock2
+    limits2.black_clock = args.clock2
+
 def simulate_game(white, black, start_pos, white_limits, black_limits):
     cur = white # current engine
     cur_limits = white_limits # current engine's limits
@@ -84,8 +90,15 @@ def simulate_game(white, black, start_pos, white_limits, black_limits):
 
     while not board.is_game_over():
         # Play the current player.
+        start = time.perf_counter()
         result = cur.play(board, cur_limits)
+        end = time.perf_counter()
         board.push(result.move)
+        elapsed = end - start
+        cur_limits.white_clock -= elapsed
+        cur_limits.black_clock -= elapsed
+        if cur_limits.white_clock <= 0 or cur_limits.black_clock <= 0:
+            return "black" if cur == white else "white"
         # Toggle player.
         cur = black if cur == white else white
         cur_limits = black_limits if cur_limits == white_limits else white_limits
@@ -116,6 +129,7 @@ for i in range(args.repeat):
 
     for position in positions[args.pos_start:args.pos_end]:
         # Have engine1 start:
+        reset_clock()
         result = simulate_game(engine1, engine2, position, limits1, limits2)
         if result == "white":
             e1wins += 1
@@ -124,6 +138,7 @@ for i in range(args.repeat):
         else:
             draws += 1
         # Now have engine2 start:
+        reset_clock()
         result = simulate_game(engine2, engine1, position, limits1, limits2)
         if result == "white":
             e2wins += 1
