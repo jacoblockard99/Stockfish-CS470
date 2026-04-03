@@ -97,14 +97,15 @@ def simulate_game(white, black, start_pos, white_limits, black_limits):
         elapsed = end - start
         cur_limits.white_clock -= elapsed
         cur_limits.black_clock -= elapsed
-        if cur_limits.white_clock <= 0 or cur_limits.black_clock <= 0:
+        print(cur_limits)
+        if cur_limits.white_clock <= 0.001 or cur_limits.black_clock <= 0.001:
             return "black" if cur == white else "white"
         # Toggle player.
         cur = black if cur == white else white
         cur_limits = black_limits if cur_limits == white_limits else white_limits
 
         if args.verbose:
-            print(board)
+            print(board, flush=True)
             print("")
 
     # Figure out result

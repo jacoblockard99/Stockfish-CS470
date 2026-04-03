@@ -1,0 +1,37 @@
+#!/bin/ruby
+
+if ARGV.size != 1
+    puts "Usage: ./aggregate output_dir\n\n"
+    puts "Simulates games with one thread against the given number of threads with the given turn time limit starting at the given positions, repeating the given number of times."
+    exit 1
+end
+
+
+output = ARGV[0]
+one = 0
+two = 0
+draw = 0
+time = 0
+
+Dir.each_child(output) do |file|
+    next if file.end_with? '.info'
+
+    path = File.join(output, file)
+    lines = File.readlines(path)
+
+    next if lines.empty?
+
+    _one, _two, _draw = lines[-5].split(" ")
+    _time = lines[-1].split(" ").last
+
+    one += _one.to_i
+    two += _two.to_i
+    draw += _draw.to_i
+    time += _time.to_f
+end
+
+unless one+two+draw == 0
+    puts "#{one} #{two} #{draw}"
+    puts "Total: #{one+two+draw}"
+    puts "Time: #{time}"
+end

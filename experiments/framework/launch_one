@@ -11,7 +11,7 @@ end
 output = ARGV[0]
 args = ARGV.drop(1).join(" ")
 
-File.write("#{output}.info", "File: #{output}\nArgs: #{args}\n")
+File.write("#{output}.info", "Output: #{output}\nCommand: ./play #{args}\n")
 
 script = File.read('job.sh')
 script.gsub!("{OUTPUT}", output)

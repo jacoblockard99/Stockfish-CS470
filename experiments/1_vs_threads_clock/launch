@@ -1,0 +1,35 @@
+#!/bin/ruby
+
+require 'optparse'
+require_relative '../framework/chunk'
+
+if ARGV.size != 4
+    puts "Usage: ./launch position_files opponent_threads clock_times nodes\n\n"
+    puts "Simulates games with one thread against the given number of threads with the given clock time limit starting at the given positions, repeating the given number of times."
+    exit 1
+end
+
+trial=`date +%s`
+trial.chomp!
+
+positions = ARGV[0].split(" ")
+threads = ARGV[1].split(" ")
+clocks = ARGV[2].split(" ")
+nodes = ARGV[3]
+
+`mkdir -p output`
+`mkdir -p output/#{trial}`
+
+dir = Dir.pwd
+Dir.chdir("../framework")
+
+positions.each do |pos|
+    pos_file = "../positions/#{pos}"
+    threads.each do |thread_count|
+        clocks.each do |clock|
+            args = "1 #{thread_count} ../../src/stockfish #{pos_file} --clock1 #{clock} --clock2 #{clock}"
+            `../framework/launch_positions #{dir}/output/#{trial}/#{pos}__#{thread_count}__#{clock} #{pos_file} #{nodes} \"#{args}\"`
+            puts "Queued: Pos #{pos}, Thread #{thread_count}, Clock #{clock}"
+        end
+    end
+end

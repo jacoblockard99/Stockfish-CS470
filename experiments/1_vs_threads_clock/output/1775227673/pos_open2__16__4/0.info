@@ -1,0 +1,2 @@
+Output: /nfs/home/lockarjl/Stockfish-CS470/experiments/1_vs_threads_clock/output/1775227673/pos_open2__16__4/0
+Command: ./play 1 16 ../../src/stockfish ../positions/pos_open2 --clock1 4 --clock2 4 --pos-start 0 --pos-end 10
