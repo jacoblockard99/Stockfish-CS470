@@ -22,6 +22,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <tuple>
+#include <shared_mutex>
 
 #include "memory.h"
 #include "types.h"
@@ -74,7 +75,8 @@ struct TTWriter {
    private:
     friend class TranspositionTable;
     TTEntry* entry;
-    TTWriter(TTEntry* tte);
+    std::shared_mutex* mutex;
+    TTWriter(TTEntry* tte, std::shared_mutex* mtx);
 };
 
 
@@ -103,6 +105,8 @@ class TranspositionTable {
     Cluster* table = nullptr;
 
     uint8_t generation8 = 0;  // Size must be not bigger than TTEntry::genBound8
+
+    mutable std::shared_mutex ttMutex;
 };
 
 }  // namespace Stockfish

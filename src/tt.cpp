@@ -23,6 +23,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
+#include <shared_mutex>
 
 #include "memory.h"
 #include "misc.h"
@@ -124,11 +125,13 @@ uint8_t TTEntry::relative_age(const uint8_t generation8) const {
 
 
 // TTWriter is but a very thin wrapper around the pointer
-TTWriter::TTWriter(TTEntry* tte) :
-    entry(tte) {}
+TTWriter::TTWriter(TTEntry* tte, std::shared_mutex* mtx) :
+    entry(tte),
+    mutex(mtx) {}
 
 void TTWriter::write(
   Key k, Value v, bool pv, Bound b, Depth d, Move m, Value ev, uint8_t generation8) {
+    std::unique_lock<std::shared_mutex> lock(*mutex);
     entry->save(k, v, pv, b, d, m, ev, generation8);
 }
 
@@ -221,6 +224,7 @@ uint8_t TranspositionTable::generation() const { return generation8; }
 // minus 8 times its relative age. TTEntry t1 is considered more valuable than
 // TTEntry t2 if its replace value is greater than that of t2.
 std::tuple<bool, TTData, TTWriter> TranspositionTable::probe(const Key key) const {
+    std::shared_lock<std::shared_mutex> lock(ttMutex);
 
     TTEntry* const tte   = first_entry(key);
     const uint16_t key16 = uint16_t(key);  // Use the low 16 bits as key inside the cluster
@@ -229,7 +233,7 @@ std::tuple<bool, TTData, TTWriter> TranspositionTable::probe(const Key key) cons
         if (tte[i].key16 == key16)
             // This gap is the main place for read races.
             // After `read()` completes that copy is final, but may be self-inconsistent.
-            return {tte[i].is_occupied(), tte[i].read(), TTWriter(&tte[i])};
+            return {tte[i].is_occupied(), tte[i].read(), TTWriter(&tte[i], &ttMutex)};
 
     // Find an entry to be replaced according to the replacement strategy
     TTEntry* replace = tte;
@@ -240,7 +244,7 @@ std::tuple<bool, TTData, TTWriter> TranspositionTable::probe(const Key key) cons
 
     return {false,
             TTData{Move::none(), VALUE_NONE, VALUE_NONE, DEPTH_ENTRY_OFFSET, BOUND_NONE, false},
-            TTWriter(replace)};
+            TTWriter(replace, &ttMutex)};
 }
 
 
